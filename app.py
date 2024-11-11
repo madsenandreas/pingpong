@@ -155,7 +155,7 @@ TEMPLATE = """
     <div class="half black-half" id="blackTeam">
         BlackSide: <span id="count_black">{{ black }}</span>
     </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="./jquery.min.js"></script>
     <script>
         $(document).ready(function() {
             function fetchCount_white() {
