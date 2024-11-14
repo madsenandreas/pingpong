@@ -1,121 +1,111 @@
 let white_count = 0;
 let black_count = 0;
 let chosen_index = null;
-const whiteSideNames = [
-    "Fellowship",            // Lord of the Rings
-    "Jedi",                 // Star Wars
-    "Federation",           // Star Trek
-    "Dumbledore's Army",    // Harry Potter
-    "The Doctor",           // Doctor Who
-    "X-Men",                // X-Men
-    "Zion",                 // Matrix
-    "Serenity",             // Firefly
-    "Winchester",           // Supernatural
-];
+let confettiInterval = null;
 
-const blackSideNames = [
-    "Mordor",               // Lord of the Rings
-    "Sith",                 // Star Wars
-    "Klingon",              // Star Trek
-    "Death Eaters",         // Harry Potter
-    "Dalek",                // Doctor Who
-    "Brotherhood",          // X-Men
-    "Machine",              // Matrix
-    "Alliance",             // Firefly
-    "Demons",                // Supernatural
+// Team name pairs from different franchises
+const teamNames = [
+    {white: "Fellowship", black: "Mordor", franchise: "Lord of the Rings"},
+    {white: "Jedi", black: "Sith", franchise: "Star Wars"},
+    {white: "Federation", black: "Klingon", franchise: "Star Trek"},
+    {white: "Dumbledore's Army", black: "Death Eaters", franchise: "Harry Potter"},
+    {white: "The Doctor", black: "Dalek", franchise: "Doctor Who"},
+    {white: "X-Men", black: "Brotherhood", franchise: "X-Men"},
+    {white: "Zion", black: "Machine", franchise: "Matrix"},
+    {white: "Serenity", black: "Alliance", franchise: "Firefly"},
+    {white: "Winchester", black: "Demons", franchise: "Supernatural"}
 ];
 
 function updateTeamNames() {
     let new_index;
     do {
-        new_index = Math.floor(Math.random() * whiteSideNames.length);
+        new_index = Math.floor(Math.random() * teamNames.length);
     } while (new_index === chosen_index);
     
     chosen_index = new_index;
-    const randomWhiteName = whiteSideNames[chosen_index];
-    const randomBlackName = blackSideNames[chosen_index];
-    $('#white_side_name').text(randomWhiteName);
-    $('#black_side_name').text(randomBlackName);
+    const teams = teamNames[chosen_index];
+    $('#white_side_name').text(teams.white);
+    $('#black_side_name').text(teams.black);
+}
+
+function animatePanel(winner, loser, duration) {
+    $(`.${winner}-half`).animate({width: '100%'}, duration);
+    $(`.${loser}-half`).animate({width: '0%'}, duration);
+}
+
+function showCake(side) {
+    $('.cake').css({
+        'bottom': '-100%',
+        [side]: '45%'
+    }).removeClass('hidden')
+      .animate({bottom: '-10%'}, 1000);
+}
+
+function throwConfetti(color, intensity) {
+    const colors = color === 'white' ? 
+        ['#ffffff', '#f0f0f0', '#e0e0e0'] :
+        ['#000000', '#202020', '#404040'];
+        
+    confetti({
+        particleCount: intensity === 'high' ? 150 : 100,
+        spread: intensity === 'high' ? 200 : 150,
+        origin: { y: 0.6 },
+        colors: colors
+    });
+}
+
+function startConfettiInterval(color, intensity) {
+    if (confettiInterval) {
+        clearInterval(confettiInterval);
+    }
+    confettiInterval = setInterval(() => throwConfetti(color, intensity), 500);
 }
 
 function checkWinner() {
     if (white_count === 0 && black_count === 0) {
         // Reset panels to original state
-        $('.white-half').animate({width: '50%'}, 500);
-        $('.black-half').animate({width: '50%'}, 500);
-        $('.cake').addClass('hidden');
-        $('.cake').css('bottom', '-100%');
-        updateTeamNames(); // Update names when game resets
-    } else if (white_count >= 11) {
-        if (black_count === 0) {
-            $('.black-half').animate({width: '0%'}, 250);
-            $('.white-half').animate({width: '100%'}, 250);
-            $('.cake').css('bottom', '-100%')
-            $('.cake').css('right', '45%')
-            $('.cake').removeClass('hidden');
-            $('.cake').animate({bottom: '-10%'}, 1000);
+        $('.white-half, .black-half').animate({width: '50%'}, 500);
+        $('.cake').addClass('hidden').css('bottom', '-100%');
+        if (confettiInterval) {
+            clearInterval(confettiInterval);
+            confettiInterval = null;
+        }
+        updateTeamNames();
+        return;
+    }
 
-            confetti({
-                particleCount: 150,
-                spread: 150,
-                origin: { y: 0.6 },
-                colors: ['#000000', '#202020', '#404040']
-            });
-            
+    if (white_count >= 11) {
+        if (black_count === 0) {
+            animatePanel('white', 'black', 1000);
+            showCake('right');
+            startConfettiInterval('black', 'high');
         } else {
-            $('.black-half').animate({width: '0%'}, 500);
-            $('.white-half').animate({width: '100%'}, 500);
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#000000', '#202020', '#404040']
-            });
+            animatePanel('white', 'black', 1000);
+            startConfettiInterval('black', 'normal');
         }
     } else if (black_count >= 11) {
         if (white_count === 0) {
-            $('.white-half').animate({width: '0%'}, 250);
-            $('.black-half').animate({width: '100%'}, 250);
-            $('.cake').css('bottom', '-100%')
-            $('.cake').css('left', '45%')
-            $('.cake').removeClass('hidden');
-            $('.cake').animate({bottom: '-10%'}, 1000);
-            // Add black confetti
-            confetti({
-                particleCount: 150,
-                spread: 100,
-                origin: { y: 0.6 },
-                colors: ['#ffffff', '#f0f0f0', '#e0e0e0']
-            });
+            animatePanel('black', 'white', 1000);
+            showCake('left');
+            startConfettiInterval('white', 'high');
         } else {
-            $('.white-half').animate({width: '0%'}, 500);
-            $('.black-half').animate({width: '100%'}, 500);
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#ffffff', '#f0f0f0', '#e0e0e0']
-            });
+            animatePanel('black', 'white', 1000);
+            startConfettiInterval('white', 'normal');
         }
     }
 }
 
 function updateInstructions() {
-    if (white_count > 0 || black_count > 0) {
-        $('.instructions').fadeOut(500);
-    } else {
-        $('.instructions').fadeIn(500);
-    }
+    const method = (white_count > 0 || black_count > 0) ? 'fadeOut' : 'fadeIn';
+    $('.instructions')[method](500);
 }
 
 $(document).ready(function() {
-    updateTeamNames(); // Update names when DOM loads
+    updateTeamNames();
     
     $.getJSON('/isDebug', function(data) {
         if (data.debug) {
-            $('#button_white').removeClass('hidden');
-            $('#button_black').removeClass('hidden');
-            $('#button_reset').removeClass('hidden');
+            $('#button_white, #button_black, #button_reset').removeClass('hidden');
         }
     });
     
@@ -132,34 +122,27 @@ $(document).ready(function() {
             const newWhiteCount = parseInt(data.count_white);
             const newBlackCount = parseInt(data.count_black);
             
+            const updateCallback = () => {
+                checkWinner();
+                updateInstructions();
+            };
+            
             if (newWhiteCount !== white_count) {
                 white_count = newWhiteCount;
-                updateCounter('#count_white', white_count, function() {
-                    checkWinner();
-                    updateInstructions();
-                });
+                updateCounter('#count_white', white_count, updateCallback);
             }
             
             if (newBlackCount !== black_count) {
                 black_count = newBlackCount;
-                updateCounter('#count_black', black_count, function() {
-                    checkWinner();
-                    updateInstructions();
-                });
+                updateCounter('#count_black', black_count, updateCallback);
             }
         });
     }
     
     setInterval(fetchCounts, 50);
 
-    // DEBUGGING BUTTONS
-    $('#button_white').click(function() {
-        $.post('/button_white');
-    });
-    $('#button_black').click(function() {
-        $.post('/button_black');
-    });
-    $('#button_reset').click(function() {
-        $.post('/reset');
-    });
+    // Debug button handlers
+    $('#button_white').click(() => $.post('/button_white'));
+    $('#button_black').click(() => $.post('/button_black'));
+    $('#button_reset').click(() => $.post('/reset'));
 });
