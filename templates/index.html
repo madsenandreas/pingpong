@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="leftside"></div>
+    <div class="rightside"></div>
     <div class="information">
         <div class="buttons">
             <button id="button_reset" class="hidden">Reset</button>
@@ -19,7 +21,7 @@
             <div class="instruction-text">Both reset</div>
         </div>
     </div>
-
+<div class="scoreboard">
     <div class="half white-half" id="whiteTeam">
         <div class="name-and-score"><span id="white_side_name">WhiteSide</span><span id="count_white">{{ white }}</span></div>
     </div>
@@ -27,6 +29,8 @@
     <div class="half black-half" id="blackTeam">
         <div class="name-and-score"><span id="black_side_name">BlackSide</span><span id="count_black">{{ black }}</span></div>
     </div>
+</div>
+
 
     <div class="cake hidden">
         <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 

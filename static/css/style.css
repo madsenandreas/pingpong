@@ -7,6 +7,32 @@ body {
     align-items: center;
     font-family: Arial, sans-serif;
     overflow: hidden;
+    background-color: white;
+}
+.scoreboard {
+    display: flex;
+    overflow: hidden;
+    width: 75%;
+    background-color: rgb(15 23 42);
+    color: rgb(203 213 225);
+    z-index: 100;
+    border: 1px solid black;
+    border-radius: 26px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+.leftside, .rightside {
+    width: 50%;
+    height: 100%;
+    position: absolute;
+}
+
+.leftside {
+    left: 0;
+    background-color: #800000eb;
+}
+.rightside {
+    right: 0;
+    background-color: rgb(15 23 42);;
 }
 
 .half {
@@ -21,13 +47,13 @@ body {
 }
 
 .white-half {
-    background-color: rgb(203 213 225);
+    background-color: #ff5454;
     color: rgb(15 23 42);
 }
 
 .black-half {
-    background-color: rgb(15 23 42);
-    color: rgb(203 213 225);
+    background-color: rgb(34 64 141);
+    color: lightgrey;
 }
 
 .information {
@@ -43,9 +69,8 @@ body {
 }
 .instructions {
     text-align: right;
-    font-size: 1.5vw;
+    font-size: 1vw;
     padding: 1rem;
-
 }
 
 .hidden {
@@ -79,7 +104,6 @@ body {
 .cake{
     position: absolute;
     border-radius: 0.75rem;
-
     bottom: -10%;
     max-width: 10%;
     height: 80%;
@@ -91,7 +115,7 @@ body {
 }
 
 .instruction-text{
-    font-size: 1.9rem;
+    font-size: 1.4rem;
     color: rgb(148 163 184);
     margin: 4px 0;
     font-weight: 300;
@@ -106,8 +130,6 @@ body {
     border-radius: 1rem;
     padding: 5rem;
 }
-
-
 
 .name-and-score span {
     margin: 0 10px;
