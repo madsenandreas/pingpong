@@ -32,14 +32,38 @@ body {
 
 .information {
     position: fixed;
-    display: flex;
-    justify-content: space-between;
     bottom: 5%;
-    height: 4rem;
     width: 100%;
-    align-items: center;
+    
     z-index: 100;
     
+}
+
+.bottom-information{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 4rem
+}
+
+.server-info{
+    position: fixed;
+    margin: 1rem;
+    border-radius: 9999px;
+    padding: 2.5rem;
+    top: 0;
+}
+
+.white-server-side{
+    background-color: rgb(15 23 42);
+    color: rgb(203 213 225);
+    left: 0;
+}
+.black-server-side{
+    background-color: rgb(203 213 225);
+    color: rgb(15 23 42);
+    right: 0;
 }
 .instructions {
     text-align: right;
