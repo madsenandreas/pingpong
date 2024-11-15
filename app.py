@@ -15,6 +15,7 @@ black_start = 0
 white = 0
 black = 0
 DEBUG = False
+started = False
 current_server = 'white'  # Track current server (white or black)
 serves_remaining = 2      # Track serves remaining before switch
 
@@ -101,12 +102,12 @@ def monitor_reset():
         sleep(0.1)
 
 def reset_scores():
-    global white, black, current_server, serves_remaining
+    global white, black, current_server, serves_remaining, started
+    started = False
     white = 0
     black = 0
     current_server = 'white'
     serves_remaining = 2
-    print("Scores have been reset.")
     emit_game_state()
 
 def handle_press(button):
@@ -131,26 +132,37 @@ def handle_release(button, increment, decrement):
                 emit_game_state()
 
 def white_increment():
-    global white
-    white += 1
-    decrement_server()
+    global white, started
+    if not started:
+        started = True
+    else:
+        white += 1
+        decrement_server()
+    emit_game_state()
 
 def white_decrement():
     global white
     if white > 0:
         white -= 1
         increment_server()
+        emit_game_state()
 
 def black_increment():
-    global black
-    black += 1
-    decrement_server()
+    global black, started
+    if not started:
+        started = True
+    else:
+        black += 1
+        decrement_server()
+    emit_game_state()
 
 def black_decrement():
     global black
     if black > 0:
         black -= 1
         increment_server()
+        emit_game_state()
+
 white_button.when_pressed = lambda: handle_press(white_button)
 white_button.when_released = lambda: handle_release(white_button, white_increment, white_decrement)
 
@@ -161,11 +173,13 @@ reset_thread = threading.Thread(target=monitor_reset, daemon=True)
 reset_thread.start()
 
 def emit_game_state():
+    global started, current_server, serves_remaining, white, black
     socketio.emit('game_state', {
         'count_white': white,
         'count_black': black,
         'current_server': current_server,
-        'serves_remaining': serves_remaining
+        'serves_remaining': serves_remaining,
+        'started': started
     })
 
 
@@ -188,7 +202,6 @@ def handle_button_press(data):
         white_decrement()
     elif button_color == 'black_decrement':
         black_decrement()
-    emit_game_state()
 
 @socketio.on('reset_request')
 def handle_reset_request():

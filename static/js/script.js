@@ -18,7 +18,16 @@ const teamNames = [
     {white: "Winchester", black: "Demons", franchise: "Supernatural"},
     {white: "Smash Bros", black: "Straight Shooters", franchise: "Ping Pong #2"},
 ];
-
+function toggleStartScreen(show) {
+    const currentDisplay = $('#start_screen').css("display");
+    if (show && currentDisplay === "none") {
+        $('#start_screen').css("display", "flex");
+        $('.instructions').css('display', 'none');
+    } else if (!show && currentDisplay === "flex") {
+        $('#start_screen').css("display", "none");
+        $('.instructions').css('display', 'block');
+    }
+}
 function updateCounter(elementId, newCount, callback) {
     const $counter = $(elementId);
     $counter.fadeOut(100, function() {
@@ -161,6 +170,9 @@ socket.on('game_state', function(data) {
         }
     }
     $('#serves_remaining').text(data.serves_remaining);
+
+    let hideStartScreen = !data.started;
+    toggleStartScreen(hideStartScreen)
 });
 
 $(document).ready(function() {
@@ -168,26 +180,15 @@ $(document).ready(function() {
 
     socket.emit('debug_request');
     socket.on('debug_response', function(data) {
-    function toggleStartScreen(show) {
-        const currentDisplay = $('#start_screen').css("display");
-        if (show && currentDisplay === "none") {
-            $('#start_screen').css("display", "flex");
-            $('.instructions').css('display', 'none');
-        } else if (!show && currentDisplay === "flex") {
-            $('#start_screen').css("display", "none");
-            $('.instructions').css('display', 'block');
+        if (data.debug) {
+            $('#button_white, #button_black, #button_reset, #button_white_decrement, #button_black_decrement').removeClass('hidden');
         }
-    }
-
-    toggleStartScreen(true);
+    });
     
 
     $('#button_white').click(() => socket.emit('button_press', { button: 'white' }));
     $('#button_black').click(() => socket.emit('button_press', { button: 'black' }));
-    $('#button_reset').click(() => {
-        socket.emit('reset_request')
-        toggleStartScreen(true);
-    });
+    $('#button_reset').click(() => socket.emit('reset_request'));
     $('#button_white_decrement').click(() => socket.emit('button_press', { button: 'white_decrement' }));
     $('#button_black_decrement').click(() => socket.emit('button_press', { button: 'black_decrement' }));
 });
