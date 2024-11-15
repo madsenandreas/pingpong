@@ -3,6 +3,7 @@ let black_count = 0;
 let chosen_index = null;
 let confettiInterval = null;
 let current_server = 'white';
+let starting_server = Math.random() < 0.5 ? 'Red starts serving!' : 'Blue starts serving!';
 // Team name pairs from different franchises
 const teamNames = [
     {white: "Fellowship", black: "Mordor", franchise: "Lord of the Rings"},
@@ -61,6 +62,12 @@ function startConfettiInterval(color, intensity) {
     confettiInterval = setInterval(() => throwConfetti(color, intensity), 500);
 }
 
+function chooseStartingServer() { 
+    // Anitmation here
+    $('.starting-server').html(starting_server);
+    $('.starting-server').delay(5000).fadeOut('slow');
+}
+
 function checkWinner() {
     if (white_count === 0 && black_count === 0) {
         // Reset panels to original state
@@ -107,7 +114,7 @@ function updateInstructions() {
 
 $(document).ready(function() {
     updateTeamNames();
-    
+    chooseStartingServer();
     $.getJSON('/isDebug', function(data) {
         if (data.debug) {
             $('#button_white, #button_black, #button_reset').removeClass('hidden');

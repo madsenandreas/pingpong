@@ -10,6 +10,14 @@ body {
     background-color: white;
 }
 
+.starting-server {
+position: absolute;
+top: 30%;
+color: white;
+font-size: 2vw;
+
+}
+
 .scoreboard {
     display: flex;
     overflow: hidden;
