@@ -21,13 +21,13 @@ body {
 }
 
 .white-half {
-    background-color: rgb(203 213 225);
-    color: rgb(15 23 42);
+    background-color: #ffffff;
+    color: #303030;
 }
 
 .black-half {
-    background-color: rgb(15 23 42);
-    color: rgb(203 213 225);
+    background-color: #303030;
+    color: #ffffff;
 }
 
 .information {
@@ -58,12 +58,12 @@ body {
 .buttons button {
     padding: 8px 16px;
     font-size: 1rem;
-    border: 1px solid rgb(15 23 42);
+    border: 1px solid #303030;
     margin: 0 10px;
     border-radius: 4px;
     cursor: pointer;
-    background-color: rgb(203 213 225);
-    color: rgb(15 23 42);
+    background-color: #ffffff;
+    color: #303030;
     transition: all 0.2s ease;
 }
 
@@ -119,4 +119,69 @@ body {
     font-size: 5rem;
     font-weight: 500;
     margin-top: 0.5rem;
+}
+
+#start_screen {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 9999999999;
+
+    color: #ffffff;
+    background: #303030;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+#start_screen .wrapper {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding: 40px;
+}
+
+#start_screen .wrapper h1 {
+    display: inline-flex;
+    padding-bottom: 10px;
+    border-bottom: 5px solid #b9e1cc;
+    width: auto;
+}
+
+#start_screen .server-history {
+    position: absolute;
+    top: 40px;
+    right: 150px;
+}
+
+#start_screen .server-history ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#start_screen .server-history li {
+    background: #ffffff;
+    color: #303030;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    padding: 8px 20px;
+    padding-right: 80px;
+}
+
+#start_screen .server-history li .score {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+#start_screen .server-history li .score.--win {
+    color: #4caf50;
+}
+
+#start_screen .server-history li .score.--loss {
+    color: #f44336;
 }

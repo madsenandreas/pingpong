@@ -7,6 +7,128 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="container" id="start_screen">
+        <div class="wrapper">
+            <h1>Ping Pong</h1>
+
+            <div class="server-selection">
+                <h2>Select Server</h2>
+                <p>Press <strong>Left</strong> or <strong>Right</strong> to select the server</p>
+            </div>
+
+            <div class="server-history">
+                <h2>History</h2>
+
+                <ul>
+                    <li>
+                        <span class="score --win">11</span>
+                        <span class="score__seperator">-</span>
+                        <span class="score --loss">7</span>
+                        <span class="server">White</span>
+                        <span class="server">Black</span>
+                    </li>
+
+                    <li>
+                        <span class="score --loss">8</span>
+                        <span class="score__seperator">-</span>
+                        <span class="score --win">11</span>
+                        <span class="server">Black</span>
+                        <span class="server">White</span>
+                    </li>
+
+                    <li>
+                        <span class="score --win">11</span>
+                        <span class="score__seperator">-</span>
+                        <span class="score --loss">9</span>
+                        <span class="server">White</span>
+                        <span class="server">Black</span>
+                    </li>
+
+                    <li>
+                        <span class="score --loss">6</span>
+                        <span class="score__seperator">-</span>
+                        <span class="score --win">11</span>
+                        <span class="server">Black</span>
+                        <span class="server">White</span>
+                    </li>
+
+                    <li>
+                        <span class="score --win">11</span>
+                        <span class="score__seperator">-</span>
+                        <span class="score --loss">5</span>
+                        <span class="server">White</span>
+                        <span class="server">Black</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="game-modes">
+                <h2>Available Game Modes</h2>
+                <ul>
+                    <li>
+                        <strong>Best of 1 Set:</strong> A single set played to 11 points. Perfect for quick games.
+                    </li>
+                    <li>
+                        <strong>Best of 3 Sets (Default):</strong> Each set is played to 11 points. The player or team that wins 2 out of 3 sets wins the match.
+                    </li>
+                    <li>
+                        <strong>Custom Mode:</strong> Configure custom rules like the number of sets or points to win.
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="game-rules">
+                <h2>Game Rules</h2>
+
+                <ul>
+                    <li>
+                        <strong>Scoring:</strong>
+                        <ul>
+                            <li>Games are typically played to 11 points.</li>
+                            <li>A player must win by at least 2 points.</li>
+                            <li>Matches usually consist of best-of-3 sets.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Serve:</strong>
+                        <ul>
+                            <li>Each player serves two consecutive points, alternating serves.</li>
+                            <li>The serve must start with the ball resting on the palm, tossed at least 16 cm upward.</li>
+                            <li>The ball must bounce on both sides of the table.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Gameplay:</strong>
+                        <ul>
+                            <li>Players take turns hitting the ball after it bounces once on their side.</li>
+                            <li>A point ends if the ball bounces twice, is hit into the net, or is hit off the table without touching it.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Doubles:</strong>
+                        <ul>
+                            <li>Partners alternate hits during rallies.</li>
+                            <li>The serve must go diagonally across the table.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Let:</strong>
+                        <ul>
+                            <li>A serve is replayed if it touches the net but lands correctly on the opponent’s side.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Winning:</strong>
+                        <ul>
+                            <li>The first player to 11 points (with a 2-point lead) wins the game.</li>
+                            <li>The match winner is the first to win the majority of games (e.g., 2 out of 3 in "Best of 3").</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <div class="information">
         <div class="buttons">
             <button id="button_reset" class="hidden">Reset</button>
