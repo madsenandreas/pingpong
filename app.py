@@ -8,6 +8,9 @@ from time import time, sleep
 app = Flask(__name__, template_folder='templates')
 socketio = SocketIO(app)  # Initialize SocketIO
 
+white_start = 0
+black_start = 0
+
 # Initial count for white and black button presses
 white = 0
 black = 0

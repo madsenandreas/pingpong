@@ -8,13 +8,15 @@ let starting_server = Math.random() < 0.5 ? 'Red starts serving!' : 'Blue starts
 const teamNames = [
     {white: "Fellowship", black: "Mordor", franchise: "Lord of the Rings"},
     {white: "Jedi", black: "Sith", franchise: "Star Wars"},
+    {white: "Net Huggers", black: "Backhand Bandits", franchise: "Ping Pong #1"},
     {white: "Federation", black: "Klingon", franchise: "Star Trek"},
     {white: "Dumbledore's Army", black: "Death Eaters", franchise: "Harry Potter"},
     {white: "The Doctor", black: "Dalek", franchise: "Doctor Who"},
     {white: "X-Men", black: "Brotherhood", franchise: "X-Men"},
     {white: "Zion", black: "Machine", franchise: "Matrix"},
     {white: "Serenity", black: "Alliance", franchise: "Firefly"},
-    {white: "Winchester", black: "Demons", franchise: "Supernatural"}
+    {white: "Winchester", black: "Demons", franchise: "Supernatural"},
+    {white: "Smash Bros", black: "Straight Shooters", franchise: "Ping Pong #2"},
 ];
 
 function updateCounter(elementId, newCount, callback) {
@@ -166,14 +168,26 @@ $(document).ready(function() {
 
     socket.emit('debug_request');
     socket.on('debug_response', function(data) {
-        if (data.debug) {
-            $('#button_white, #button_black, #button_reset, #button_white_decrement, #button_black_decrement').removeClass('hidden');
+    function toggleStartScreen(show) {
+        const currentDisplay = $('#start_screen').css("display");
+        if (show && currentDisplay === "none") {
+            $('#start_screen').css("display", "flex");
+            $('.instructions').css('display', 'none');
+        } else if (!show && currentDisplay === "flex") {
+            $('#start_screen').css("display", "none");
+            $('.instructions').css('display', 'block');
         }
-    });
+    }
+
+    toggleStartScreen(true);
+    
 
     $('#button_white').click(() => socket.emit('button_press', { button: 'white' }));
     $('#button_black').click(() => socket.emit('button_press', { button: 'black' }));
-    $('#button_reset').click(() => socket.emit('reset_request'));
+    $('#button_reset').click(() => {
+        socket.emit('reset_request')
+        toggleStartScreen(true);
+    });
     $('#button_white_decrement').click(() => socket.emit('button_press', { button: 'white_decrement' }));
     $('#button_black_decrement').click(() => socket.emit('button_press', { button: 'black_decrement' }));
 });
