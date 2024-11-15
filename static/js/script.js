@@ -68,6 +68,15 @@ function chooseStartingServer() {
     $('.starting-server').delay(5000).fadeOut('slow');
 }
 
+function aheadByTwo(p1, p2) {
+    if ( p1-p2 >= 2) {
+        console.log('ahead by two');
+        return true;
+    }
+    console.log('not ahead by two');
+    return false;
+}
+
 function checkWinner() {
     if (white_count === 0 && black_count === 0) {
         // Reset panels to original state
@@ -83,30 +92,34 @@ function checkWinner() {
     }
 
     if (white_count >= 11) {
-        if (black_count === 0) {
-            $(".server-info").fadeOut(500);
-            animatePanel('white', 'black', 1000);
-            showCake('right');
-            startConfettiInterval('black', 'high');
-        } else {
-            $(".server-info").fadeOut(500);
-            animatePanel('white', 'black', 1000);
-            startConfettiInterval('black', 'normal');
+        if (aheadByTwo(white_count, black_count)) { 
+            if (black_count === 0) {
+                $(".server-info").fadeOut(500);
+                animatePanel('white', 'black', 1000);
+                showCake('right');
+                startConfettiInterval('black', 'high');
+            } else {
+                $(".server-info").fadeOut(500);
+                animatePanel('white', 'black', 1000);
+                startConfettiInterval('black', 'normal');
+            }
         }
+
     } else if (black_count >= 11) {
-        if (white_count === 0) {
-            $(".server-info").fadeOut(500);
-            animatePanel('black', 'white', 1000);
-            showCake('left');
-            startConfettiInterval('white', 'high');
-        } else {
-            $(".server-info").fadeOut(500);
-            animatePanel('black', 'white', 1000);
-            startConfettiInterval('white', 'normal');
+        if (aheadByTwo(black_count, white_count)) {
+            if (white_count === 0) {
+                $(".server-info").fadeOut(500);
+                animatePanel('black', 'white', 1000);
+                showCake('left');
+                startConfettiInterval('white', 'high');
+            } else {
+                $(".server-info").fadeOut(500);
+                animatePanel('black', 'white', 1000);
+                startConfettiInterval('white', 'normal');
+            }
         }
     }
 }
-
 function updateInstructions() {
     const method = (white_count > 0 || black_count > 0) ? 'fadeOut' : 'fadeIn';
     $('.instructions')[method](500);
