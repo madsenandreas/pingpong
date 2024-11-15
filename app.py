@@ -76,7 +76,6 @@ def select_starting_server():
     global current_server
     import random
     current_server = random.choice(['white', 'black'])
-    print("Starting server:", current_server)
 
 def select_team_names():
     global current_white_name, current_black_name, team_names

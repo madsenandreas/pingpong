@@ -41,7 +41,7 @@ font-size: 2vw;
 }
 .rightside {
     right: 0;
-    background-color: rgb(15 23 42);;
+    background-color: rgb(15 23 42);
 }
 
 .half {
@@ -53,16 +53,22 @@ font-size: 2vw;
     align-items: center;
     position: relative;
     font-size: 4vw;
+    overflow: hidden;
 }
 
 .white-half {
     background-color: #ff5454;
     color: black;
+    height: auto;
 }
 
 .black-half {
     background-color: rgb(34 64 141);
     color: white;
+    height: auto;
+}
+.whiteTeam, .blackTeam {
+    overflow: hidden;
 }
 
 .information {
@@ -263,4 +269,24 @@ font-size: 2vw;
 
 #start_screen .server-selection {
     font-size: 2em;
+}
+
+.sets-score {
+    font-size: 1.5rem;
+    margin-top: 1rem;
+}
+
+.set-history {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 10px;
+    color: white;
+}
+
+.set-result {
+    margin: 5px 0;
+    font-size: 1.2rem;
 }

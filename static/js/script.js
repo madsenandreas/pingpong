@@ -66,6 +66,7 @@ function checkWinner() {
             confettiInterval = null;
         }
         $(".server-info").fadeIn(500);
+
         return;
     }
 
