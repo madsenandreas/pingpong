@@ -1,19 +1,57 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template_string, jsonify
-from gpiozero import Button
-from time import time, sleep
+from flask import Flask, render_template, jsonify
 import threading
+from time import time, sleep
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 # Initial count for white and black button presses
 white = 0
 black = 0
+DEBUG = False
+current_server = 'white'  # Track current server (white or black)
+serves_remaining = 2      # Track serves remaining before switch
 
-# Define buttons with a debounce time
-white_button = Button(3, bounce_time=0.1)
-black_button = Button(17, bounce_time=0.1)
+# Try to import and set up GPIO, fallback to mock implementation if not on Pi
+try:
+    from gpiozero import Button
+    # Define buttons with a debounce time
+    white_button = Button(3, bounce_time=0.1)
+    black_button = Button(17, bounce_time=0.1)
+    ON_RASPBERRY_PI = True
+
+except (ImportError, Exception):
+    print("Not running on Raspberry Pi - using mock button implementation")
+    ON_RASPBERRY_PI = False
+    DEBUG = True
+    
+    # Mock Button class for development
+    class MockButton:
+        def __init__(self, pin):
+            self.pin = type('obj', (object,), {'number': pin})
+            self.is_pressed = False
+            self._when_pressed = None
+            self._when_released = None
+            
+        @property
+        def when_pressed(self):
+            return self._when_pressed
+            
+        @when_pressed.setter
+        def when_pressed(self, func):
+            self._when_pressed = func
+            
+        @property
+        def when_released(self):
+            return self._when_released
+            
+        @when_released.setter
+        def when_released(self, func):
+            self._when_released = func
+    
+    white_button = MockButton(3)
+    black_button = MockButton(17)
 
 # Constants for press duration
 LONG_PRESS_THRESHOLD = 1.0  # seconds for increment/decrement
@@ -45,16 +83,18 @@ def monitor_reset():
         sleep(0.1)
 
 def reset_scores():
-    global white, black
+    global white, black, current_server, serves_remaining
     white = 0
     black = 0
+    current_server = 'white'  # Reset server to white
+    serves_remaining = 2      # Reset serves remaining
     print("Scores have been reset.")
 
 def handle_press(button):
     press_times[button.pin.number] = time()
 
 def handle_release(button, increment, decrement):
-    global reset_active
+    global reset_active, serves_remaining, current_server
     if not reset_active:
         start_time = press_times.pop(button.pin.number, None)
         if start_time:
@@ -63,6 +103,12 @@ def handle_release(button, increment, decrement):
                 decrement()
             else:
                 increment()
+                # Update serves after each point
+                serves_remaining -= 1
+                if serves_remaining == 0:
+                    # Switch servers and reset count
+                    current_server = 'black' if current_server == 'white' else 'white'
+                    serves_remaining = 2
 
 def white_increment():
     global white
@@ -97,98 +143,55 @@ black_button.when_released = lambda: handle_release(black_button, black_incremen
 reset_thread = threading.Thread(target=monitor_reset, daemon=True)
 reset_thread.start()
 
-TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tennis</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-        }
-        .half {
-            width: 50%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Center content vertically */
-            align-items: center; /* Center content horizontally */
-            position: relative; /* Needed for absolute positioning of instructions */
-            font-size: 4vw;
-        }
-        .white-half {
-            background-color: white;
-            color: black;
-        }
-        .black-half {
-            background-color: black;
-            color: white;
-        }
-        .instructions {
-            position: absolute;
-            top: 10px; /* Position at the top */
-            left: 10px; /* Position at the left */
-            text-align: left;
-            font-size: 1.5vw; /* Smaller font size for instructions */
-            width: auto; /* Auto width to fit content */
-            max-width: 50%; /* Max width to prevent too wide */
-        }
-    </style>
-</head>
-<body>
-    <div class="half white-half" id="whiteTeam">
-        <div class="instructions">
-            Press short to increase value<br>
-            Press long to decrease value<br>
-            Press both to zero values
-        </div>
-        WhiteSide: <span id="count_white">{{ white }}</span>
-    </div>
-    <div class="half black-half" id="blackTeam">
-        BlackSide: <span id="count_black">{{ black }}</span>
-    </div>
-    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
-    <script>
-        $(document).ready(function() {
-            function fetchCount_white() {
-                $.getJSON('/count_white', function(data) {
-                    $('#count_white').text(data.count_white);
-                });
-            }
-            setInterval(fetchCount_white, 100); // Update the white count every second
-
-            function fetchCount_black() {
-                $.getJSON('/count_black', function(data) {
-                    $('#count_black').text(data.count_black);
-                });
-            }
-            setInterval(fetchCount_black, 100); // Update the black count every second
-        });
-    </script>
-</body>
-</html>
-"""
-
-
 @app.route('/')
 def index():
-    return render_template_string(TEMPLATE, white=white, black=black)
+    return render_template('index.html', white=white, black=black)
 
-@app.route('/count_white')
-def get_count_white():
-    return jsonify({'count_white': white})
+@app.route('/counts')
+def get_counts():
+    return jsonify({
+        'count_white': white, 
+        'count_black': black,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
 
-@app.route('/count_black')
-def get_count_black():
-    return jsonify({'count_black': black})
+@app.route('/button_white', methods=['POST'])
+def button_white_pressed():
+    global white, serves_remaining, current_server
+    white += 1
+    serves_remaining -= 1
+    if serves_remaining == 0:
+        current_server = 'black' if current_server == 'white' else 'white'
+        serves_remaining = 2
+    return jsonify({
+        'count_white': white,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
+
+@app.route('/button_black', methods=['POST'])
+def button_black_pressed():
+    global black, serves_remaining, current_server
+    black += 1
+    serves_remaining -= 1
+    if serves_remaining == 0:
+        current_server = 'black' if current_server == 'white' else 'white'
+        serves_remaining = 2
+    return jsonify({
+        'count_black': black,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
+
+@app.route('/reset', methods=['POST'])
+def reset():
+    reset_scores()
+    return jsonify({'reset': True})
+
+@app.route('/isDebug')
+def is_debug():
+    return jsonify({'debug': DEBUG})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
