@@ -9,6 +9,7 @@ body {
     overflow: hidden;
     background-color: white;
 }
+
 .scoreboard {
     display: flex;
     overflow: hidden;
@@ -48,12 +49,12 @@ body {
 
 .white-half {
     background-color: #ff5454;
-    color: rgb(15 23 42);
+    color: black;
 }
 
 .black-half {
     background-color: rgb(34 64 141);
-    color: lightgrey;
+    color: white;
 }
 
 .information {
