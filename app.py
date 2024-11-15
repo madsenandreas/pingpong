@@ -6,6 +6,9 @@ from time import time, sleep
 
 app = Flask(__name__, template_folder='templates')
 
+white_start = 0
+black_start = 0
+
 # Initial count for white and black button presses
 white = 0
 black = 0
@@ -81,10 +84,12 @@ def monitor_reset():
         sleep(0.1)
 
 def reset_scores():
-    global white, black
+    global white, black, white_start, black_start
     white = 0
     black = 0
-    print("Scores have been reset.")
+    white_start = 0
+    black_start = 0
+    print("Scores and game state have been reset.")
 
 def handle_press(button):
     press_times[button.pin.number] = time()
@@ -101,9 +106,12 @@ def handle_release(button, increment, decrement):
                 increment()
 
 def white_increment():
-    global white
-    white += 1
-    print(f"White button short press. Total presses: {white}")
+    global white, white_start, black_start
+    if white_start or black_start:
+        white += 1
+    else:
+        white_start = 1
+        print(f"White button short press. Total presses: {white}")
 
 def white_decrement():
     global white
@@ -112,9 +120,12 @@ def white_decrement():
         print(f"White button long press. Total presses: {white}")
 
 def black_increment():
-    global black
-    black += 1
-    print(f"Black button short press. Total presses: {black}")
+    global black, white_start, black_start
+    if white_start or black_start:
+        black += 1
+    else:
+        black_start = 1
+        print(f"Black button short press. Total presses: {black}")
 
 def black_decrement():
     global black
@@ -122,7 +133,6 @@ def black_decrement():
         black -= 1
         print(f"Black button long press. Total presses: {black}")
 
-# Attach handlers for press and release events
 white_button.when_pressed = lambda: handle_press(white_button)
 white_button.when_released = lambda: handle_release(white_button, white_increment, white_decrement)
 
@@ -139,18 +149,24 @@ def index():
 
 @app.route('/counts')
 def get_counts():
-    return jsonify({'count_white': white, 'count_black': black})
+    return jsonify({'count_white': white, 'count_black': black, 'white_start': white_start, 'black_start': black_start})
 
 @app.route('/button_white', methods=['POST'])
 def button_white_pressed():
-    global white
-    white += 1
+    global white, white_start, black_start
+    if white_start or black_start:
+        white += 1
+    else:
+        white_start = 1
     return jsonify({'count_white': white})
 
 @app.route('/button_black', methods=['POST']) 
 def button_black_pressed():
-    global black
-    black += 1
+    global black, white_start, black_start
+    if white_start or black_start:
+        black += 1
+    else:
+        black_start = 1
     return jsonify({'count_black': black})
 
 @app.route('/reset', methods=['POST'])

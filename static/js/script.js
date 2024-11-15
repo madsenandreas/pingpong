@@ -72,6 +72,7 @@ function checkWinner() {
             clearInterval(confettiInterval);
             confettiInterval = null;
         }
+
         updateTeamNames();
         return;
     }
@@ -104,6 +105,19 @@ function updateInstructions() {
 
 $(document).ready(function() {
     updateTeamNames();
+
+    function toggleStartScreen(show) {
+        const currentDisplay = $('#start_screen').css("display");
+        if (show && currentDisplay === "none") {
+            $('#start_screen').css("display", "flex");
+            $('.instructions').css('display', 'none');
+        } else if (!show && currentDisplay === "flex") {
+            $('#start_screen').css("display", "none");
+            $('.instructions').css('display', 'block');
+        }
+    }
+
+    toggleStartScreen(true);
     
     $.getJSON('/isDebug', function(data) {
         if (data.debug) {
@@ -121,22 +135,31 @@ $(document).ready(function() {
 
     function fetchCounts() {
         $.getJSON('/counts', function(data) {
+            const whiteStart =  parseInt(data.white_start);
+            const blackStart = parseInt(data.black_start);
+
             const newWhiteCount = parseInt(data.count_white);
             const newBlackCount = parseInt(data.count_black);
             
+
             const updateCallback = () => {
                 checkWinner();
                 updateInstructions();
             };
             
-            if (newWhiteCount !== white_count) {
-                white_count = newWhiteCount;
-                updateCounter('#count_white', white_count, updateCallback);
-            }
-            
-            if (newBlackCount !== black_count) {
-                black_count = newBlackCount;
-                updateCounter('#count_black', black_count, updateCallback);
+            if (whiteStart === 0 && blackStart === 0) {
+                toggleStartScreen(true);
+            } else {
+                toggleStartScreen(false);
+                if (newWhiteCount !== white_count) {
+                    white_count = newWhiteCount;
+                    updateCounter('#count_white', white_count, updateCallback);
+                }
+                
+                if (newBlackCount !== black_count) {
+                    black_count = newBlackCount;
+                    updateCounter('#count_black', black_count, updateCallback);
+                }
             }
         });
     }
@@ -146,5 +169,8 @@ $(document).ready(function() {
     // Debug button handlers
     $('#button_white').click(() => $.post('/button_white'));
     $('#button_black').click(() => $.post('/button_black'));
-    $('#button_reset').click(() => $.post('/reset'));
+    $('#button_reset').click(() => {
+        $.post('/reset');
+        toggleStartScreen(true);
+    });
 });
