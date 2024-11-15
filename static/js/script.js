@@ -3,21 +3,8 @@ let black_count = 0;
 let chosen_index = null;
 let confettiInterval = null;
 let current_server = null;
-let starting_server = Math.random() < 0.5 ? 'Red starts serving!' : 'Blue starts serving!';
-// Team name pairs from different franchises
-const teamNames = [
-    {white: "Fellowship", black: "Mordor", franchise: "Lord of the Rings"},
-    {white: "Jedi", black: "Sith", franchise: "Star Wars"},
-    {white: "Net Huggers", black: "Backhand Bandits", franchise: "Ping Pong #1"},
-    {white: "Federation", black: "Klingon", franchise: "Star Trek"},
-    {white: "Dumbledore's Army", black: "Death Eaters", franchise: "Harry Potter"},
-    {white: "The Doctor", black: "Dalek", franchise: "Doctor Who"},
-    {white: "X-Men", black: "Brotherhood", franchise: "X-Men"},
-    {white: "Zion", black: "Machine", franchise: "Matrix"},
-    {white: "Serenity", black: "Alliance", franchise: "Firefly"},
-    {white: "Winchester", black: "Demons", franchise: "Supernatural"},
-    {white: "Smash Bros", black: "Straight Shooters", franchise: "Ping Pong #2"},
-];
+
+
 function toggleStartScreen(show) {
     const currentDisplay = $('#start_screen').css("display");
     if (show && currentDisplay === "none") {
@@ -34,18 +21,6 @@ function updateCounter(elementId, newCount, callback) {
         $counter.text(newCount).fadeIn(100);
         callback();
     });
-}
-
-function updateTeamNames() {
-    let new_index;
-    do {
-        new_index = Math.floor(Math.random() * teamNames.length);
-    } while (new_index === chosen_index);
-    
-    chosen_index = new_index;
-    const teams = teamNames[chosen_index];
-    $('#white_side_name').text(teams.white);
-    $('#black_side_name').text(teams.black);
 }
 
 function animatePanel(winner, loser, duration) {
@@ -91,7 +66,6 @@ function checkWinner() {
             confettiInterval = null;
         }
         $(".server-info").fadeIn(500);
-        updateTeamNames();
         return;
     }
 
@@ -119,6 +93,7 @@ function checkWinner() {
         }
     }
 }
+
 
 function updateInstructions() {
     const method = (white_count > 0 || black_count > 0) ? 'fadeOut' : 'fadeIn';
@@ -173,11 +148,13 @@ socket.on('game_state', function(data) {
 
     let hideStartScreen = !data.started;
     toggleStartScreen(hideStartScreen)
+
+    $('#white_side_name').text(data.current_white_name);
+    $('#black_side_name').text(data.current_black_name);
+
 });
 
 $(document).ready(function() {
-    updateTeamNames();
-
     socket.emit('debug_request');
     socket.on('debug_response', function(data) {
         if (data.debug) {

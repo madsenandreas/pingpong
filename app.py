@@ -4,6 +4,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import threading
 from time import time, sleep
+from team_names import team_names
 
 app = Flask(__name__, template_folder='templates')
 socketio = SocketIO(app)  # Initialize SocketIO
@@ -16,8 +17,12 @@ white = 0
 black = 0
 DEBUG = False
 started = False
-current_server = 'white'  # Track current server (white or black)
+current_server = None  # Track current server (white or black)
 serves_remaining = 2      # Track serves remaining before switch
+current_white_name = None
+current_black_name = None
+theme = None
+
 
 # Try to import and set up GPIO, fallback to mock implementation if not on Pi
 try:
@@ -66,6 +71,21 @@ RESET_THRESHOLD = 0.5       # seconds for reset
 # Variables to track the press start times and reset check
 press_times = {}
 reset_active = False
+
+def select_starting_server():
+    global current_server
+    import random
+    current_server = random.choice(['white', 'black'])
+    print("Starting server:", current_server)
+
+def select_team_names():
+    global current_white_name, current_black_name, team_names
+    import random
+    selected_team = random.choice(team_names)
+    current_white_name = selected_team['white']
+    current_black_name = selected_team['black']
+    theme = selected_team['franchise']
+
 def decrement_server():
     global serves_remaining, current_server
     serves_remaining -= 1
@@ -101,12 +121,21 @@ def monitor_reset():
             reset_active = False
         sleep(0.1)
 
+def start_game():
+    global started
+    started = True
+    select_starting_server()
+    select_team_names()
+
 def reset_scores():
     global white, black, current_server, serves_remaining, started
     started = False
     white = 0
     black = 0
-    current_server = 'white'
+    current_server = None
+    current_white_name = None
+    current_black_name = None
+    theme = None
     serves_remaining = 2
     emit_game_state()
 
@@ -134,7 +163,7 @@ def handle_release(button, increment, decrement):
 def white_increment():
     global white, started
     if not started:
-        started = True
+        start_game()
     else:
         white += 1
         decrement_server()
@@ -150,7 +179,7 @@ def white_decrement():
 def black_increment():
     global black, started
     if not started:
-        started = True
+        start_game()
     else:
         black += 1
         decrement_server()
@@ -173,14 +202,17 @@ reset_thread = threading.Thread(target=monitor_reset, daemon=True)
 reset_thread.start()
 
 def emit_game_state():
-    global started, current_server, serves_remaining, white, black
+    global started, current_server, serves_remaining, white, black, current_white_name, current_black_name
     socketio.emit('game_state', {
         'count_white': white,
         'count_black': black,
         'current_server': current_server,
         'serves_remaining': serves_remaining,
-        'started': started
+        'started': started,
+        'current_white_name': current_white_name,
+        'current_black_name': current_black_name
     })
+
 
 
 @socketio.on('debug_request')
