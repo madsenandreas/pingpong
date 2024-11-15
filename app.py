@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
 import threading
 from time import time, sleep
 
 app = Flask(__name__, template_folder='templates')
+socketio = SocketIO(app)  # Initialize SocketIO
 
 # Initial count for white and black button presses
 white = 0
@@ -60,6 +62,19 @@ RESET_THRESHOLD = 0.5       # seconds for reset
 # Variables to track the press start times and reset check
 press_times = {}
 reset_active = False
+def decrement_server():
+    global serves_remaining, current_server
+    serves_remaining -= 1
+    if serves_remaining == 0:
+        current_server = 'black' if current_server == 'white' else 'white'
+        serves_remaining = 2
+
+def increment_server():
+    global serves_remaining, current_server
+    serves_remaining += 1
+    if serves_remaining >= 3:
+        current_server = 'black' if current_server == 'white' else 'white'
+        serves_remaining = 1
 
 def monitor_reset():
     global reset_active
@@ -86,9 +101,10 @@ def reset_scores():
     global white, black, current_server, serves_remaining
     white = 0
     black = 0
-    current_server = 'white'  # Reset server to white
-    serves_remaining = 2      # Reset serves remaining
+    current_server = 'white'
+    serves_remaining = 2
     print("Scores have been reset.")
+    emit_game_state()
 
 def handle_press(button):
     press_times[button.pin.number] = time()
@@ -106,92 +122,74 @@ def handle_release(button, increment, decrement):
                 # Update serves after each point
                 serves_remaining -= 1
                 if serves_remaining == 0:
-                    # Switch servers and reset count
                     current_server = 'black' if current_server == 'white' else 'white'
                     serves_remaining = 2
+                # Emit updated state to all clients
+                emit_game_state()
 
 def white_increment():
     global white
     white += 1
-    print(f"White button short press. Total presses: {white}")
+    decrement_server()
 
 def white_decrement():
     global white
     if white > 0:
         white -= 1
-        print(f"White button long press. Total presses: {white}")
+        increment_server()
 
 def black_increment():
     global black
     black += 1
-    print(f"Black button short press. Total presses: {black}")
+    decrement_server()
 
 def black_decrement():
     global black
     if black > 0:
         black -= 1
-        print(f"Black button long press. Total presses: {black}")
-
-# Attach handlers for press and release events
+        increment_server()
 white_button.when_pressed = lambda: handle_press(white_button)
 white_button.when_released = lambda: handle_release(white_button, white_increment, white_decrement)
 
 black_button.when_pressed = lambda: handle_press(black_button)
 black_button.when_released = lambda: handle_release(black_button, black_increment, black_decrement)
 
-# Start the background thread to monitor for reset condition
 reset_thread = threading.Thread(target=monitor_reset, daemon=True)
 reset_thread.start()
+
+def emit_game_state():
+    socketio.emit('game_state', {
+        'count_white': white,
+        'count_black': black,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
+
+
+@socketio.on('debug_request')
+def handle_debug_request():
+    socketio.emit('debug_response', {'debug': DEBUG})
+
+@socketio.on('connect')
+def handle_connect():
+    emit_game_state()
+
+@socketio.on('button_press')
+def handle_button_press(data):
+    button_color = data.get('button')
+    if button_color == 'white':
+        white_increment()
+    elif button_color == 'black':
+        black_increment()
+    emit_game_state()
+
+@socketio.on('reset_request')
+def handle_reset_request():
+    reset_scores()
 
 @app.route('/')
 def index():
     return render_template('index.html', white=white, black=black)
 
-@app.route('/counts')
-def get_counts():
-    return jsonify({
-        'count_white': white, 
-        'count_black': black,
-        'current_server': current_server,
-        'serves_remaining': serves_remaining
-    })
-
-@app.route('/button_white', methods=['POST'])
-def button_white_pressed():
-    global white, serves_remaining, current_server
-    white += 1
-    serves_remaining -= 1
-    if serves_remaining == 0:
-        current_server = 'black' if current_server == 'white' else 'white'
-        serves_remaining = 2
-    return jsonify({
-        'count_white': white,
-        'current_server': current_server,
-        'serves_remaining': serves_remaining
-    })
-
-@app.route('/button_black', methods=['POST'])
-def button_black_pressed():
-    global black, serves_remaining, current_server
-    black += 1
-    serves_remaining -= 1
-    if serves_remaining == 0:
-        current_server = 'black' if current_server == 'white' else 'white'
-        serves_remaining = 2
-    return jsonify({
-        'count_black': black,
-        'current_server': current_server,
-        'serves_remaining': serves_remaining
-    })
-
-@app.route('/reset', methods=['POST'])
-def reset():
-    reset_scores()
-    return jsonify({'reset': True})
-
-@app.route('/isDebug')
-def is_debug():
-    return jsonify({'debug': DEBUG})
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)

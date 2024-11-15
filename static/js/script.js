@@ -2,7 +2,7 @@ let white_count = 0;
 let black_count = 0;
 let chosen_index = null;
 let confettiInterval = null;
-let current_server = 'white';
+let current_server = null;
 let starting_server = Math.random() < 0.5 ? 'Red starts serving!' : 'Blue starts serving!';
 // Team name pairs from different franchises
 const teamNames = [
@@ -16,6 +16,14 @@ const teamNames = [
     {white: "Serenity", black: "Alliance", franchise: "Firefly"},
     {white: "Winchester", black: "Demons", franchise: "Supernatural"}
 ];
+
+function updateCounter(elementId, newCount, callback) {
+    const $counter = $(elementId);
+    $counter.fadeOut(100, function() {
+        $counter.text(newCount).fadeIn(100);
+        callback();
+    });
+}
 
 function updateTeamNames() {
     let new_index;
@@ -62,12 +70,6 @@ function startConfettiInterval(color, intensity) {
     confettiInterval = setInterval(() => throwConfetti(color, intensity), 500);
 }
 
-function chooseStartingServer() { 
-    // Anitmation here
-    $('.starting-server').html(starting_server);
-    $('.starting-server').delay(5000).fadeOut('slow');
-}
-
 function checkWinner() {
     if (white_count === 0 && black_count === 0) {
         // Reset panels to original state
@@ -112,73 +114,64 @@ function updateInstructions() {
     $('.instructions')[method](500);
 }
 
+const socket = io();
+
+socket.on('game_state', function(data) {
+    const newWhiteCount = parseInt(data.count_white);
+    const newBlackCount = parseInt(data.count_black);
+    
+    const updateCallback = () => {
+        checkWinner();
+        updateInstructions();
+    };
+    
+    if (newWhiteCount !== white_count) {
+        white_count = newWhiteCount;
+        updateCounter('#count_white', white_count, updateCallback);
+    }
+    
+    if (newBlackCount !== black_count) {
+        black_count = newBlackCount;
+        updateCounter('#count_black', black_count, updateCallback);
+    }
+
+    if (current_server != data.current_server) {
+        if (data.current_server === 'white') {
+            current_server = 'white';
+            $('.server-info')
+                .animate({right: '100%'}, 200, function() {
+                    $(this)
+                        .removeClass('black-server-side')
+                        .addClass('white-server-side')
+                        .css({right: '', left: '0'})
+                        .animate({left: '0'}, 200);
+                });
+        } else if (data.current_server === 'black') {
+            current_server = 'black';
+            $('.server-info')
+                .animate({left: '100%'}, 200, function() {
+                    $(this)
+                        .removeClass('white-server-side')
+                        .addClass('black-server-side')
+                        .css({left: '', right: '0'})
+                        .animate({right: '0'}, 200);
+                });
+        }
+    }
+    $('#serves_remaining').text(data.serves_remaining);
+});
+
 $(document).ready(function() {
     updateTeamNames();
-    chooseStartingServer();
-    $.getJSON('/isDebug', function(data) {
+
+    socket.emit('debug_request');
+    socket.on('debug_response', function(data) {
         if (data.debug) {
             $('#button_white, #button_black, #button_reset').removeClass('hidden');
         }
     });
-    
-    function updateCounter(elementId, newCount, callback) {
-        const $counter = $(elementId);
-        $counter.fadeOut(100, function() {
-            $counter.text(newCount).fadeIn(100);
-            callback();
-        });
-    }
 
-    function fetchCounts() {
-        $.getJSON('/counts', function(data) {
-            const newWhiteCount = parseInt(data.count_white);
-            const newBlackCount = parseInt(data.count_black);
-            
-            const updateCallback = () => {
-                checkWinner();
-                updateInstructions();
-            };
-            
-            if (newWhiteCount !== white_count) {
-                white_count = newWhiteCount;
-                updateCounter('#count_white', white_count, updateCallback);
-            }
-            
-            if (newBlackCount !== black_count) {
-                black_count = newBlackCount;
-                updateCounter('#count_black', black_count, updateCallback);
-            }
-            if(current_server !=data.current_server){
-            if(data.current_server === 'white'){
-                current_server = 'white';
-                $('.server-info')
-                    .animate({right: '100%'}, 200, function() {
-                        $(this)
-                            .removeClass('black-server-side')
-                            .addClass('white-server-side')
-                            .css({right: '', left: '0'})
-                            .animate({left: '0'}, 200);
-                    });
-            }else if(data.current_server === 'black'){
-                current_server = 'black';
-                $('.server-info')
-                    .animate({left: '100%'}, 200, function() {
-                        $(this)
-                            .removeClass('white-server-side')
-                            .addClass('black-server-side')
-                            .css({left: '', right: '0'})
-                            .animate({right: '0'}, 200);
-                    });
-            }
-        }
-            $('#serves_remaining').text(data.serves_remaining);
-        });
-    }
-    
-    setInterval(fetchCounts, 50);
-
-    // Debug button handlers
-    $('#button_white').click(() => $.post('/button_white'));
-    $('#button_black').click(() => $.post('/button_black'));
-    $('#button_reset').click(() => $.post('/reset'));
+    $('#button_white').click(() => socket.emit('button_press', { button: 'white' }));
+    $('#button_black').click(() => socket.emit('button_press', { button: 'black' }));
+    $('#button_reset').click(() => socket.emit('reset_request'));
 });
