@@ -64,8 +64,6 @@ function startConfettiInterval(color, intensity) {
 
 function chooseStartingServer() { 
     // Anitmation here
-    let test = document.getElementsByClassName('serving-turn')
-    console.log(starting_server)
     $('.starting-server').html(starting_server);
     $('.starting-server').delay(5000).fadeOut('slow');
 }
