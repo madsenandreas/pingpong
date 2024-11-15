@@ -10,6 +10,8 @@ app = Flask(__name__, template_folder='templates')
 white = 0
 black = 0
 DEBUG = False
+current_server = 'white'  # Track current server (white or black)
+serves_remaining = 2      # Track serves remaining before switch
 
 # Try to import and set up GPIO, fallback to mock implementation if not on Pi
 try:
@@ -81,16 +83,18 @@ def monitor_reset():
         sleep(0.1)
 
 def reset_scores():
-    global white, black
+    global white, black, current_server, serves_remaining
     white = 0
     black = 0
+    current_server = 'white'  # Reset server to white
+    serves_remaining = 2      # Reset serves remaining
     print("Scores have been reset.")
 
 def handle_press(button):
     press_times[button.pin.number] = time()
 
 def handle_release(button, increment, decrement):
-    global reset_active
+    global reset_active, serves_remaining, current_server
     if not reset_active:
         start_time = press_times.pop(button.pin.number, None)
         if start_time:
@@ -99,6 +103,12 @@ def handle_release(button, increment, decrement):
                 decrement()
             else:
                 increment()
+                # Update serves after each point
+                serves_remaining -= 1
+                if serves_remaining == 0:
+                    # Switch servers and reset count
+                    current_server = 'black' if current_server == 'white' else 'white'
+                    serves_remaining = 2
 
 def white_increment():
     global white
@@ -139,19 +149,40 @@ def index():
 
 @app.route('/counts')
 def get_counts():
-    return jsonify({'count_white': white, 'count_black': black})
+    return jsonify({
+        'count_white': white, 
+        'count_black': black,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
 
 @app.route('/button_white', methods=['POST'])
 def button_white_pressed():
-    global white
+    global white, serves_remaining, current_server
     white += 1
-    return jsonify({'count_white': white})
+    serves_remaining -= 1
+    if serves_remaining == 0:
+        current_server = 'black' if current_server == 'white' else 'white'
+        serves_remaining = 2
+    return jsonify({
+        'count_white': white,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
 
-@app.route('/button_black', methods=['POST']) 
+@app.route('/button_black', methods=['POST'])
 def button_black_pressed():
-    global black
+    global black, serves_remaining, current_server
     black += 1
-    return jsonify({'count_black': black})
+    serves_remaining -= 1
+    if serves_remaining == 0:
+        current_server = 'black' if current_server == 'white' else 'white'
+        serves_remaining = 2
+    return jsonify({
+        'count_black': black,
+        'current_server': current_server,
+        'serves_remaining': serves_remaining
+    })
 
 @app.route('/reset', methods=['POST'])
 def reset():

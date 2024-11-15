@@ -2,7 +2,7 @@ let white_count = 0;
 let black_count = 0;
 let chosen_index = null;
 let confettiInterval = null;
-
+let current_server = 'white';
 // Team name pairs from different franchises
 const teamNames = [
     {white: "Fellowship", black: "Mordor", franchise: "Lord of the Rings"},
@@ -70,25 +70,30 @@ function checkWinner() {
             clearInterval(confettiInterval);
             confettiInterval = null;
         }
+        $(".server-info").fadeIn(500);
         updateTeamNames();
         return;
     }
 
     if (white_count >= 11) {
         if (black_count === 0) {
+            $(".server-info").fadeOut(500);
             animatePanel('white', 'black', 1000);
             showCake('right');
             startConfettiInterval('black', 'high');
         } else {
+            $(".server-info").fadeOut(500);
             animatePanel('white', 'black', 1000);
             startConfettiInterval('black', 'normal');
         }
     } else if (black_count >= 11) {
         if (white_count === 0) {
+            $(".server-info").fadeOut(500);
             animatePanel('black', 'white', 1000);
             showCake('left');
             startConfettiInterval('white', 'high');
         } else {
+            $(".server-info").fadeOut(500);
             animatePanel('black', 'white', 1000);
             startConfettiInterval('white', 'normal');
         }
@@ -136,6 +141,30 @@ $(document).ready(function() {
                 black_count = newBlackCount;
                 updateCounter('#count_black', black_count, updateCallback);
             }
+            if(current_server !=data.current_server){
+            if(data.current_server === 'white'){
+                current_server = 'white';
+                $('.server-info')
+                    .animate({right: '100%'}, 200, function() {
+                        $(this)
+                            .removeClass('black-server-side')
+                            .addClass('white-server-side')
+                            .css({right: '', left: '0'})
+                            .animate({left: '0'}, 200);
+                    });
+            }else if(data.current_server === 'black'){
+                current_server = 'black';
+                $('.server-info')
+                    .animate({left: '100%'}, 200, function() {
+                        $(this)
+                            .removeClass('white-server-side')
+                            .addClass('black-server-side')
+                            .css({left: '', right: '0'})
+                            .animate({right: '0'}, 200);
+                    });
+            }
+        }
+            $('#serves_remaining').text(data.serves_remaining);
         });
     }
     
