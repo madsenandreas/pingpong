@@ -167,11 +167,13 @@ $(document).ready(function() {
     socket.emit('debug_request');
     socket.on('debug_response', function(data) {
         if (data.debug) {
-            $('#button_white, #button_black, #button_reset').removeClass('hidden');
+            $('#button_white, #button_black, #button_reset, #button_white_decrement, #button_black_decrement').removeClass('hidden');
         }
     });
 
     $('#button_white').click(() => socket.emit('button_press', { button: 'white' }));
     $('#button_black').click(() => socket.emit('button_press', { button: 'black' }));
     $('#button_reset').click(() => socket.emit('reset_request'));
+    $('#button_white_decrement').click(() => socket.emit('button_press', { button: 'white_decrement' }));
+    $('#button_black_decrement').click(() => socket.emit('button_press', { button: 'black_decrement' }));
 });

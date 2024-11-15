@@ -181,6 +181,10 @@ def handle_button_press(data):
         white_increment()
     elif button_color == 'black':
         black_increment()
+    elif button_color == 'white_decrement':
+        white_decrement()
+    elif button_color == 'black_decrement':
+        black_decrement()
     emit_game_state()
 
 @socketio.on('reset_request')
