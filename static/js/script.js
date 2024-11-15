@@ -102,13 +102,13 @@ function updateInstructions() {
 }
 
 const socket = io();
-
+let started = false;
 socket.on('game_state', function(data) {
-    const newWhiteCount = parseInt(data.count_white);
-    const newBlackCount = parseInt(data.count_black);
+    
+    const newWhiteCount = data.count_white;
+    const newBlackCount = data.count_black;
     
     const updateCallback = () => {
-        checkWinner();
         updateInstructions();
     };
     
@@ -148,13 +148,23 @@ socket.on('game_state', function(data) {
     $('#serves_remaining').text(data.serves_remaining);
 
     let hideStartScreen = !data.started;
+    
     toggleStartScreen(hideStartScreen)
 
     $('#white_side_name').text(data.current_white_name);
     $('#black_side_name').text(data.current_black_name);
 
+    if (data.game_won) {
+        const losingTeam = data.game_won === 'white' ? 'black' : 'white';
+        animatePanel(data.game_won, losingTeam, 1000);
+        startConfettiInterval(data.game_won, 'normal');
+    }
 });
-
+socket.on('reset', function(data) {
+    $(`.black-half`).animate({width: '50%'}, 0);
+    $(`.white-half`).animate({width: '50%'}, 0);
+    clearInterval(confettiInterval);
+});
 $(document).ready(function() {
     socket.emit('debug_request');
     socket.on('debug_response', function(data) {
