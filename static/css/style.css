@@ -142,6 +142,7 @@ body {
     display: block;
     position: relative;
     width: 100%;
+    height: 100%;
     padding: 40px;
 }
 
@@ -154,8 +155,8 @@ body {
 
 #start_screen .server-history {
     position: absolute;
-    top: 40px;
-    right: 150px;
+    bottom: 40px;
+    left: 40px;
 }
 
 #start_screen .server-history ul {
@@ -171,6 +172,7 @@ body {
     border-radius: 5px;
     padding: 8px 20px;
     padding-right: 80px;
+    width: 300px;
 }
 
 #start_screen .server-history li .score {
@@ -184,4 +186,22 @@ body {
 
 #start_screen .server-history li .score.--loss {
     color: #f44336;
+}
+
+#start_screen .game-modes {
+    width: 500px;
+    position: absolute;
+    top: 40px;
+    right: 120px;
+}
+
+#start_screen .game-rules {
+    width: 500px;
+    position: absolute;
+    bottom: 40px;
+    right: 120px;
+}
+
+#start_screen .server-selection {
+    font-size: 2em;
 }
