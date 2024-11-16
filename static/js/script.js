@@ -154,6 +154,9 @@ socket.on('game_state', function(data) {
     $('#white_side_name').text(data.current_white_name);
     $('#black_side_name').text(data.current_black_name);
 
+    $('#white_set_wins').text(data.white_set_wins);
+    $('#black_set_wins').text(data.black_set_wins);
+
     if (data.game_won) {
         const losingTeam = data.game_won === 'white' ? 'black' : 'white';
         animatePanel(data.game_won, losingTeam, 1000);
