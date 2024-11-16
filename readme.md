@@ -38,9 +38,14 @@ This project implements a tennis score counting system using:
 - jQuery (included)
 
 ## Installation
-
 1. Clone the repository:
 2. `pip install -r requirements.txt`
+3. `python app.py`
+
+## Development
+1. Clone the repository
+2. `pip install -r requirements-dev.txt`
+3. `python app.py`
 
 ## What I did
 - Added a debugging mode that shows the buttons and reset button
