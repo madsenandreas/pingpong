@@ -8,7 +8,7 @@ from team_names import team_names
 import random
 
 app = Flask(__name__, template_folder='templates')
-socketio = SocketIO(app)  # Initialize SocketIO
+socketio = SocketIO(app, async_mode='gevent')  # Initialize SocketIO
 
 # Game state object to track all game variables
 DEFAULT_GAME_STATE = {
@@ -25,7 +25,7 @@ DEFAULT_GAME_STATE = {
     'starting_server': None,
     'current_server': None,
     'serves_remaining': 2,
-    'current_white_name': None, 
+    'current_white_name': None,
     'current_black_name': None,
     'theme': None,
     'game_won': False,
@@ -44,7 +44,7 @@ except (ImportError, Exception):
     print("Not running on Raspberry Pi - using mock button implementation")
     ON_RASPBERRY_PI = False
     game_state['debug'] = True
-    
+
     # Mock Button class for development
     class MockButton:
         def __init__(self, pin):
@@ -52,23 +52,23 @@ except (ImportError, Exception):
             self.is_pressed = False
             self._when_pressed = None
             self._when_released = None
-            
+
         @property
         def when_pressed(self):
             return self._when_pressed
-            
+
         @when_pressed.setter
         def when_pressed(self, func):
             self._when_pressed = func
-            
+
         @property
         def when_released(self):
             return self._when_released
-            
+
         @when_released.setter
         def when_released(self, func):
             self._when_released = func
-    
+
     white_button = MockButton(3)
     black_button = MockButton(17)
 
@@ -98,10 +98,18 @@ def handle_release(button, increment, decrement):
                 # Update serves after each point
                 game_state['serves_remaining'] -= 1
                 if game_state['serves_remaining'] == 0:
+                    # Switch the server
                     game_state['current_server'] = 'black' if game_state['current_server'] == 'white' else 'white'
-                    game_state['serves_remaining'] = 2
+
+                    # Check for deuce (both sides 10 or more points)
+                    if game_state['white'] >= 10 and game_state['black'] >= 10:
+                        game_state['serves_remaining'] = 1  # One serve per side
+                    else:
+                        game_state['serves_remaining'] = 2  # Standard two serves per side
+
                 # Emit updated state to all clients
                 emit_game_state()
+
 
 # Gamestate functions
 
@@ -154,7 +162,7 @@ def end_set(winner):
             game_state['current_server'] = 'black'
         else:
             game_state['current_server'] = 'white'
-    
+
     if game_state['swapped_sides']:
         if game_state['white_set_wins'] == 2:
             game_state['game_won'] = 'black'
@@ -174,13 +182,13 @@ def end_set(winner):
 def check_set_winner():
     white_score = game_state['white']
     black_score = game_state['black']
-    
+
     # Check if either player has at least 11 points and a 2 point lead
     if white_score >= 11 and white_score - black_score >= 2:
         return 'white'
     elif black_score >= 11 and black_score - white_score >= 2:
         return 'black'
-    
+
     return None
 
 def select_starting_server():
@@ -198,7 +206,12 @@ def decrement_server():
     game_state['serves_remaining'] -= 1
     if game_state['serves_remaining'] == 0:
         game_state['current_server'] = 'black' if game_state['current_server'] == 'white' else 'white'
-        game_state['serves_remaining'] = 2
+
+    # Check if the deuce condition (both scores >= 10) is still true
+    if game_state['white'] >= 10 and game_state['black'] >= 10:
+        game_state['serves_remaining'] = 1  # Maintain single serve
+    else:
+        game_state['serves_remaining'] = 2  # Reset to normal two serves if not in deuce
 
 def increment_server():
     game_state['serves_remaining'] += 1
@@ -243,7 +256,7 @@ def reset_scores():
 
 def white_increment():
     global game_state
-    
+
     if not game_state['started']:
         start_game()
     else:
@@ -271,32 +284,32 @@ def black_increment():
     if winner:
         end_set(winner)
     emit_game_state()
-        
+
 def white_decrement():
     global game_state
     if game_state['swapped_sides']:
         if game_state['black'] > 0:
             game_state['black'] -= 1
-            increment_server()
-            emit_game_state()
     else:
         if game_state['white'] > 0:
             game_state['white'] -= 1
-            increment_server()
-            emit_game_state()
+
+    # Reassess serve logic
+    decrement_server()
+    emit_game_state()
 
 def black_decrement():
     global game_state
     if game_state['swapped_sides']:
         if game_state['white'] > 0:
             game_state['white'] -= 1
-            increment_server()
-            emit_game_state()
     else:
         if game_state['black'] > 0:
             game_state['black'] -= 1
-            increment_server()
-            emit_game_state()
+
+    # Reassess serve logic
+    decrement_server()
+    emit_game_state()
 
 @socketio.on('debug_request')
 def handle_debug_request():
@@ -337,5 +350,5 @@ reset_thread = threading.Thread(target=monitor_reset, daemon=True)
 reset_thread.start()
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5001)
 
