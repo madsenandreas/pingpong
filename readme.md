@@ -36,6 +36,8 @@ This project implements a tennis score counting system using:
 - Flask
 - gpiozero
 - jQuery (included)
+- socketio (included)
+- confetti.js (included)
 
 ## Installation
 1. Clone the repository:
