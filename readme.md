@@ -49,4 +49,10 @@ This project implements a tennis score counting system using:
 - Added a random team name generator
 - Added a confetti effect when a player wins
 - Added a cake animation when a player wins 11-0
-
+- Marius design and colors
+- AJs start screen
+- Logic for best of 3
+- Logic for side change
+- Game state object
+- Socketio instead of pulling
+- Set information
