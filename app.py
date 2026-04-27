@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 
+import os
+import subprocess
+import threading
 from flask import Flask, render_template_string, jsonify
 from gpiozero import Button
 from time import time, sleep
-import threading
 
 app = Flask(__name__)
+
+# WiFi configuration – set via environment variables or a local config file.
+# Example: export PINGPONG_WIFI_SSID="MyNetwork" PINGPONG_WIFI_PASSWORD="secret"
+WIFI_SSID = os.environ.get("PINGPONG_WIFI_SSID", "")
+WIFI_PASSWORD = os.environ.get("PINGPONG_WIFI_PASSWORD", "")
 
 # Initial count for white and black button presses
 white = 0
@@ -23,23 +30,72 @@ RESET_THRESHOLD = 0.5       # seconds for reset
 press_times = {}
 reset_active = False
 
+def connect_wifi(ssid, password, retries=10, delay=5):
+    for attempt in range(1, retries + 1):
+        print(f"WiFi connection attempt {attempt}/{retries}...")
+        try:
+            result = subprocess.run(
+                ["nmcli", "dev", "wifi", "connect", ssid, "password", password],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
+                print(f"Connected to WiFi: {ssid}")
+                return True
+            else:
+                print(f"Failed: {result.stderr.strip()}")
+        except subprocess.TimeoutExpired:
+            print("WiFi connection timed out.")
+        except FileNotFoundError:
+            print("nmcli not found, skipping WiFi setup.")
+            return False
+        sleep(delay)
+    print("Could not connect to WiFi after all retries.")
+    return False
+
+def wifi_watchdog(ssid, password, check_interval=30):
+    while True:
+        sleep(check_interval)
+        try:
+            result = subprocess.run(
+                ["nmcli", "-t", "-f", "TYPE,STATE", "dev", "status"],
+                capture_output=True, text=True, timeout=10
+            )
+            # Each line is "TYPE:STATE"; look for a wifi device that is connected
+            connected = any(
+                parts[0] == "wifi" and parts[1] == "connected"
+                for line in result.stdout.splitlines()
+                for parts in (line.split(":", 1),)
+                if len(parts) == 2
+            )
+            if not connected:
+                print("WiFi lost, attempting to reconnect...")
+                connect_wifi(ssid, password)
+        except subprocess.TimeoutExpired:
+            print("WiFi watchdog: status check timed out.")
+        except FileNotFoundError:
+            print("WiFi watchdog: nmcli not found, disabling watchdog.")
+            return
+
+# Connect to WiFi on startup and start watchdog (only when credentials are configured)
+if WIFI_SSID:
+    threading.Thread(target=connect_wifi, args=(WIFI_SSID, WIFI_PASSWORD), daemon=True).start()
+    threading.Thread(target=wifi_watchdog, args=(WIFI_SSID, WIFI_PASSWORD), daemon=True).start()
+
 def monitor_reset():
     global reset_active
     while True:
         if white_button.is_pressed and black_button.is_pressed:
-            # Ensure the reset hasn't been activated yet
-            if not reset_active:
-                current_time = time()
-                white_press_time = press_times.get(white_button.pin.number)
-                black_press_time = press_times.get(black_button.pin.number)
-                if white_press_time and black_press_time:
-                    # Calculate press durations
-                    white_duration = current_time - white_press_time
-                    black_duration = current_time - black_press_time
-                    # Check if both are pressed long enough
-                    if white_duration >= RESET_THRESHOLD and black_duration >= RESET_THRESHOLD:
-                        reset_scores()
-                        reset_active = True
+            # Mark both-buttons state immediately to suppress individual increments
+            # even if released before the reset threshold is reached.
+            reset_active = True
+            current_time = time()
+            white_press_time = press_times.get(white_button.pin.number)
+            black_press_time = press_times.get(black_button.pin.number)
+            if white_press_time and black_press_time:
+                white_duration = current_time - white_press_time
+                black_duration = current_time - black_press_time
+                if white_duration >= RESET_THRESHOLD and black_duration >= RESET_THRESHOLD:
+                    reset_scores()
         else:
             reset_active = False
         sleep(0.1)
@@ -141,9 +197,23 @@ TEMPLATE = """
             width: auto; /* Auto width to fit content */
             max-width: 50%; /* Max width to prevent too wide */
         }
+        .clock {
+            position: fixed;
+            top: 10px;
+            right: 15px;
+            font-size: 5vw;
+            font-weight: bold;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.55);
+            padding: 4px 18px;
+            border-radius: 8px;
+            z-index: 100;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body>
+    <div class="clock" id="clock">00:00:00</div>
     <div class="half white-half" id="whiteTeam">
         <div class="instructions">
             Press short to increase value<br>
@@ -158,6 +228,16 @@ TEMPLATE = """
     <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
     <script>
         $(document).ready(function() {
+            function updateClock() {
+                var now = new Date();
+                var h = String(now.getHours()).padStart(2, '0');
+                var m = String(now.getMinutes()).padStart(2, '0');
+                var s = String(now.getSeconds()).padStart(2, '0');
+                $('#clock').text(h + ':' + m + ':' + s);
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
             function fetchCount_white() {
                 $.getJSON('/count_white', function(data) {
                     $('#count_white').text(data.count_white);
